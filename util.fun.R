@@ -1,3 +1,5 @@
+library(foreach)
+library(doParallel)
 
 # Function to calculate the standard error of the sample mean
 # Input: x - a numeric vector; na.rm - a logical value
@@ -38,6 +40,9 @@ bootstrap <- function(x, xbar, nboot=1000, theta, ..., func = NULL){
   )
 }
 
+theta <- function(x, xbar) {
+  mean(x) - xbar
+}
 
 # Function to calculate the symmetric bootstrap-t confidence interval
 # x: vector of the original sample
@@ -93,7 +98,7 @@ cover.95 <- function(x, xbar, bootsamples, thetastar, alpha, mu){
   ci.symboott <- symboott(x = x, xbar=xbar, thetastar = thetastar, bootsamples = bootsamples, sdfun = function(i) sd(i), nbootsd = 25)
   
   #percentile method
-  ci.perc <- quantile(bootsamples, c(alpha/2, (1-alpha)/2))
+  ci.perc <- quantile(thetastar, c(alpha/2, (1-alpha)/2))
   
   # #Wald method
   z <- qnorm(1 - alpha / 2)
@@ -101,34 +106,15 @@ cover.95 <- function(x, xbar, bootsamples, thetastar, alpha, mu){
   
   return (
     cbind(
-      cover.95_symboott_plugin = all(mu > ci.symboott.plugin[1], mu < ci.symboott.plugin[2]),
-      cover.95_symboott = all(mu > ci.symboott[1], mu < ci.symboott[2]),
-      cover.95_perc = all(mu > ci.perc[1], mu < ci.perc[2]),
-      cover.95_wald = all(mu > ci.wald[1], mu < ci.wald[2])
+      symboott_plugin = (mu > ci.symboott.plugin[1]) & (mu < ci.symboott.plugin[2]),
+      symboott = (mu > ci.symboott[1]) &  (mu < ci.symboott[2]),
+      perc = (mu > ci.perc[1]) & (mu < ci.perc[2]),
+      wald = (mu > ci.wald[1]) & (mu < ci.wald[2])
     )
   )
 }
 
 
-# Function to simulate the x based on the true mean and true sd. 
-# Then, calculate the coverage of the confidence intervals for the 4 methods
-simfun <- function(sample.size){
-  x.sim <- rnorm(sample.size, mean = mu, sd = sd)
-  xbar.sim <- mean(x.sim, na.rm = TRUE)
-  
-  # Generate nboot independent bootstrap datasets
-  boot.res <- bootstrap(x = x.sim, xbar=xbar.sim, theta=theta, nboot=1000)
-  
-  sim_cover.95 <- cover.95(
-    x = x.sim,
-    xbar = xbar.sim,
-    bootsamples = boot.res$bsample,
-    thetastar = boot.res$thetastar,
-    alpha = 0.05,
-    mu = mu)
-  
-  return(sim_cover.95)
-  
-}
+
 
 
