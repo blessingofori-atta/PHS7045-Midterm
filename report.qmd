@@ -1,11 +1,7 @@
 ---
 format: pdf
 author: Blessing Ofori-Atta
-title: Comparing Methods for Constructing Confidence Intervals
-subtitle: A 95% Coverage Analysis of Four Approaches
-execute:
-  warning: false
-  cache: true
+title: Comparing Methods for Constructing Confidence Intervals by Coverage Rate
 ---
 
 # Introduction
@@ -39,7 +35,7 @@ A simulation study is conducted to explore the coverage rate of nominal 95% conf
 1. Constructs a $1-\alpha$ confidence interval for the population mean using the formula $$\hat{\theta} \pm z_{1-\alpha/2}.\hat{se}(\hat{\theta})$$ where $z_{1-\alpha/2}$ is the $(1-\alpha/2)$ quantile of the standard normal distribution.
 
 ## Simulation Design
-The simulation involved generating $n \in {10, 20, 50, 100, 200}$ observations from an exponential distribution with mean one. For each sample size, $mcrep=1000$ replications of the observed data, were generated, and 95% confidence intervals were constructed using above methods. The coverage rate, defined as the proportion of replications in which the true mean $(\mu =1)$ fell within the confidence interval, was calculated.
+The simulation involved generating $n \in {10, 20, 50, 100, 200}$ observations from an exponential distribution with mean 1. For each sample size, $mcrep=500$ replications of the observed data, were generated, and 95% confidence intervals were constructed using above methods. The coverage rate, defined as the proportion of replications in which the true mean $(\mu =1)$ fell within the confidence interval, was calculated.
 
 # Preliminary Results
 
@@ -48,75 +44,51 @@ The simulation involved generating $n \in {10, 20, 50, 100, 200}$ observations f
 
 source("util.fun.R")
 
-# set #sample sizes to us
+# set simulation parameters
 n <- c(10, 20, 50, 100, 200)
-
-
-# Function to simulate the mcreps of x for each n. 
-# Then, calculate the coverage of the confidence intervals for the 4 methods
-simfun <- function(true.mean = 1, mcrep = 1000, nobs, alpha = 0.05){
-  sim <- rexp(nobs * mcrep, rate = 1/true.mean) # Simulate data
-  #sim <- rnorm(nobs * mcrep) # Simulate data
-  xmat <- matrix(sim, ncol = mcrep) #each column is a replication
-  xbar <- colMeans(xmat) # Compute the sample mean for each replication
+set.seed(123)
+coverage_parallel <- function() {
+  cl <- makeCluster(detectCores() - 3)  # Create cluster with available cores
+  registerDoParallel(cl)                # Register cluster for parallel backend
   
-  
-  cl <- makeCluster(detectCores()-2)
-  registerDoParallel(cl)
-  sim_results <- foreach(i = 1:mcrep, 
-                         .combine = rbind,
-                         .export = c("bootstrap", "theta", "cover.95", "symboott", "statisticse", "tcrit.fun")
-                         ) %dopar% {
-    # Generate nboot independent bootstrap datasets and compute the 95% coverage
-    boot.res <- bootstrap(x = xmat[, 1], xbar=xbar[1], theta=theta, nboot=1000)
-    
-    # Verify if the true mean is within the confidence interval
-    sim_cover.95 <- cover.95(
-      x = xmat[, i],
-      xbar = xbar[i],
-      bootsamples = boot.res$bsample,
-      thetastar = boot.res$thetastar,
-      alpha = alpha,
-      mu = true.mean)
+  coverage <- foreach(i = n, 
+                      .combine = rbind, 
+                      .packages = c("doParallel"),
+                      .export = c("simfun", "bootstrap", "cover.95", 
+                                  "symboott", "statisticse", "tcrit.fun")
+                      ) %dopar% {
+    simfun(nobs = i)
   }
   
-  # Stop the cluster
-  stopCluster(cl)
-  
-  #Return the average coverage rate across all replications
-  return(colMeans(sim_results))
+  stopCluster(cl)  # Stop the cluster after computation is done
+  return(coverage) # Return the results
 }
 
+cov <- coverage_parallel()
+cov
 
-# Repeat the simulation for each sample size
-cl <- makeCluster(detectCores()-2)
-registerDoParallel(cl)
-coverage <- foreach(i = n, .combine = rbind, .packages = c("doParallel")) %dopar% {
-  
-  simfun(nobs = i)
-}
-
-# Stop the cluster
-stopCluster(cl)
 ```
 
 
 ```{r}
 #| label: Plot
-coverage_matrix <- cbind(n, coverage)
+coverage_matrix <- cbind(n, cov)
 # Plot the coverage rate
 par(mar=c(5.1, 4.1, 3, 8.5))
 matplot(coverage_matrix[, 1], coverage_matrix[, -1], type = "l", 
-        pch = 1:4, col = 1:4, lty = 1:4, lwd = 2, ylim = c(0.75, 1), xlim = c(10, 200),
-        xlab = "Sample Size (n)", ylab = "Coverage Rate", 
+        pch = 1:4, col = 1:4, lty = 1:4, lwd = 2, ylim = c(0.75, 1), 
+        xlim = c(10, 200), xlab = "Sample Size (n)", ylab = "Coverage Rate", 
         main = "Coverage Rates by Method")
 
 abline(h = 0.95, lty = 3)
 
 par(xpd = TRUE)  
-legend("topright", inset = c(-0.4, 0.1), legend = colnames(coverage), 
+legend("bottomright", inset = c(-0.3, 0.1), legend = colnames(cov), 
        col = 1:4, lty = 1:4, pch = 1:4, bty = "n")
 ```
+
+
+
 
 # References
 

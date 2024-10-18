@@ -1,6 +1,5 @@
 ---
-title: Comparing Methods for Constructing Confidence Intervals
-subtitle: A 95% Coverage Analysis of Four Approaches
+title: Comparing Methods for Constructing Confidence Intervals by Coverage Rate
 author: Blessing Ofori-Atta
 format: revealjs
 embed-resources: true
@@ -12,8 +11,15 @@ embed-resources: true
 
 1. Consistently estimate $\theta$ and $se(\hat{\theta})$ using the observed sample (the simulated data): $\hat{\theta}$, $\hat{se}(\hat{\theta})$. 
 2. Generate a bootstrap sample $X_1^\star, \dots, X_n^*$.
+
+## Symmetric Bootstrap-t (Plug-in Estimate of Standard Error)
+
 3. Compute $\hat{\theta}^\star_b$, $\hat{se}^\star_b(\hat{\theta})$, and $$T^\star_b=\frac{\hat{\theta}^\star_b-\hat{\theta}}{\hat{se}^\star_b (\hat{\theta})}$$ based on the bootstrap sample generated in step 1, where $\hat{\theta}^\star_b$ and $\hat{se}^\star_b(\hat{\theta})$ are estimates of the parameter $\theta$ and its standard error. 
 4. Repeat steps 1 and 2 $B$ times to obtain $T^\star_b, b=1, \dots, B$.
+
+
+## Symmetric Bootstrap-t (Plug-in Estimate of Standard Error)
+
 5. Order the bootstrap replications of $T$ such that $|T^\star_{1}| \leq |T^\star_{2}| \leq \dots \leq |T^\star_{B}|$. The absolute critical value, $c$, is determined as the $(1-\alpha)B$-th element.If $\alpha B$ is not an integer, $c$ is the largest integer $<= (1-\alpha)(B+1)$. For $B=999$ and $\alpha=5\%$ this is the 950th ordered element. Now a $1-\alpha$ confidence interval for $\theta$ is $$\hat{\theta} \pm |T^\star_{c}|.\hat{se}(\hat{\theta})$$
 
 ## Symmetric Bootstrap-t (Boostrap Estimate of Standard Error)
@@ -33,10 +39,10 @@ embed-resources: true
 ## Simulation Design
 
 - The simulation involved generating $n \in {10, 20, 50, 100, 200}$ observations from an exponential distribution with mean one. 
-- For each sample size, $mcrep=1000$ replications of the observed data, were generated, and 95% confidence intervals were constructed using above methods. 
+- For each sample size, $mcrep=500$ replications of the observed data, were generated, and 95% confidence intervals were constructed using above methods. 
 - The coverage rate, defined as the proportion of replications in which the true mean $(\mu =1)$ fell within the confidence interval, was calculated.
 
 
-## Preliminary Results
+# Preliminary Results
 
-
+![](pic1.JPG)

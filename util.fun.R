@@ -25,24 +25,18 @@ tcrit.fun <- function(alpha, B){
 
 
 # Function to generate the bootstrap samples and calculate the bootstrap statistic theta
-# theta is the function to be bootstrapped (Takes x as an argument)
 # nboot is the number of bootstrap samples
-# optional argument specifying the functional form of the distribution of thetahat
-bootstrap <- function(x, xbar, nboot=1000, theta, ..., func = NULL){
+bootstrap <- function(x, xbar, nboot=1000){
   bsample <- matrix(sample(x, size = length(x) * nboot, replace = TRUE), nrow = nboot)
   #Calculate the bootstrap values of theta
-  thetastar <- apply(bsample, 1, theta, xbar = xbar)
+  thetastar <- rowMeans(bsample)
   return(list(
     bsample = bsample,
-    thetastar = thetastar, 
-    func.thetastar = if(!is.null(func)) func(thetastar) else NULL #functional form of the distribution of thetastar
+    thetastar = thetastar
   )
   )
 }
 
-theta <- function(x, xbar) {
-  mean(x) - xbar
-}
 
 # Function to calculate the symmetric bootstrap-t confidence interval
 # x: vector of the original sample
@@ -56,15 +50,14 @@ theta <- function(x, xbar) {
 # alpha: significance level
 symboott <- function(x, xbar, thetastar, bootsamples, sdfun = NULL, nboot = 1000, nbootsd=25, alpha=0.05){
   #symmetric bootstrap-t method
-  num <- thetastar
+  num <- thetastar - xbar
+  n_size <- length(x)
   cl <- parallel::makeCluster(4)
   on.exit(parallel::stopCluster(cl))  # Ensure the cluster stops when function exits
   
   if(is.null(sdfun)){
-    #Make x available in the cluster
-    #parallel::clusterExport(cl, c("statisticse", "x"))
-    #denom <- parallel::parApply(cl, bootsamples, 1, statisticse)
-    denom <- apply(bootsamples, 1, statisticse)
+    row_vars <- rowSums((bootsamples - rowMeans(bootsamples))^2) / (n_size - 1)
+    denom <- sqrt(row_vars / n_size)
     
     if (any(is.na(denom))) {
       stop("Some values in denom are NA; check the statisticse function.")
@@ -72,7 +65,7 @@ symboott <- function(x, xbar, thetastar, bootsamples, sdfun = NULL, nboot = 1000
   } else {
     # Create a function to compute denom for parallel processing
     compute_denom <- function(i) {
-      boot.sd.sample <- matrix(sample(bootsamples[i, ], size = nbootsd * length(x), replace = TRUE), nrow = nbootsd)
+      boot.sd.sample <- matrix(sample(bootsamples[i, ], size = nbootsd * n_size, replace = TRUE), nrow = nbootsd)
       boot.sd.theta <- rowMeans(boot.sd.sample)
       return(sdfun(boot.sd.theta))
     }
@@ -89,6 +82,7 @@ symboott <- function(x, xbar, thetastar, bootsamples, sdfun = NULL, nboot = 1000
 }
 
 
+
 # Function to calculate the coverage of the confidence intervals for each of the 4 methods
 cover.95 <- function(x, xbar, bootsamples, thetastar, alpha, mu){
   #symmetric bootstrap-t method with plugin estimate of standard error
@@ -98,23 +92,105 @@ cover.95 <- function(x, xbar, bootsamples, thetastar, alpha, mu){
   ci.symboott <- symboott(x = x, xbar=xbar, thetastar = thetastar, bootsamples = bootsamples, sdfun = function(i) sd(i), nbootsd = 25)
   
   #percentile method
-  ci.perc <- quantile(thetastar, c(alpha/2, (1-alpha)/2))
+  ci.perc <- quantile(thetastar, c(alpha/2, 1-alpha/2))
   
   # #Wald method
+  se_x <- statisticse(x=x)
   z <- qnorm(1 - alpha / 2)
-  ci.wald <- c(xbar - z * statisticse(x=x), xbar + z * statisticse(x=x))
+  ci.wald <- c(xbar - z * se_x, xbar + z * se_x)
   
   return (
     cbind(
-      symboott_plugin = (mu > ci.symboott.plugin[1]) & (mu < ci.symboott.plugin[2]),
-      symboott = (mu > ci.symboott[1]) &  (mu < ci.symboott[2]),
-      perc = (mu > ci.perc[1]) & (mu < ci.perc[2]),
-      wald = (mu > ci.wald[1]) & (mu < ci.wald[2])
+      symboott_plugin = all(mu > ci.symboott.plugin[1], mu < ci.symboott.plugin[2]),
+      symboott = all(mu > ci.symboott[1], mu < ci.symboott[2]),
+      perc = all(mu > ci.perc[1], mu < ci.perc[2]),
+      wald = all(mu > ci.wald[1], mu < ci.wald[2])
     )
   )
 }
 
 
+# Function to simulate the mcreps of x for each n. 
+# Then, calculate the coverage of the confidence intervals for the 4 methods
+simfun <- function(true.mean = 1, mcrep = 500, nobs, alpha = 0.05){
+  sim <- rexp(nobs * mcrep, rate = 1/true.mean) # Simulate data
+  #sim <- rnorm(n[3] * mcrep) # Simulate data
+  xmat <- matrix(sim, ncol = mcrep) #each column is a replication
+  xbar <- colMeans(xmat) # Compute the sample mean for each replication
+  
+  
+  cl <- makeCluster(detectCores()-3)
+  registerDoParallel(cl)
+  sim_results <- foreach(i = 1:mcrep, 
+                         .combine = rbind,
+                         .export = c("bootstrap", "cover.95", "symboott", "statisticse", "tcrit.fun")
+  ) %dopar% {
+    # Generate nboot independent bootstrap datasets and compute the 95% coverage
+    boot.res <- bootstrap(x = xmat[, i], xbar=xbar[i], nboot=1000)
+    
+    # Verify if the true mean is within the confidence interval
+    sim_cover.95 <- cover.95(
+      x = xmat[, i],
+      xbar = xbar[i],
+      bootsamples = boot.res$bsample,
+      thetastar = boot.res$thetastar,
+      alpha = alpha,
+      mu = true.mean)
+  }
+  
+  # Stop the cluster
+  stopCluster(cl)
+  
+  #Return the average coverage rate across all replications
+  return(colMeans(sim_results))
+}
 
 
+#============================================== Serial Function ==============================================
+
+simfun_serial <- function(true.mean = 1, mcrep = 500, nobs, alpha = 0.05){
+  sim <- rexp(nobs * mcrep, rate = 1/true.mean) # Simulate data
+  #sim <- rnorm(nobs * mcrep) # Simulate data
+  xmat <- matrix(sim, ncol = mcrep) #each column is a replication
+  xbar <- colMeans(xmat) # Compute the sample mean for each replication
+  
+  
+  sim_results <- matrix(NA, nrow = mcrep, ncol = 4)
+  for(i in 1:mcrep) {
+    # Generate nboot independent bootstrap datasets and compute the 95% coverage
+    boot.res <- bootstrap(x = xmat[, i], xbar=xbar[i], nboot=1000)
+    
+    # Verify if the true mean is within the confidence interval
+    sim_results[i, ] <- cover.95(
+      x = xmat[, i],
+      xbar = xbar[i],
+      bootsamples = boot.res$bsample,
+      thetastar = boot.res$thetastar,
+      alpha = alpha,
+      mu = true.mean)
+  }
+  
+  #Return the average coverage rate across all replications
+  return(colMeans(sim_results))
+}
+
+
+
+coverage_serial <- function() {
+  coverage <- matrix(NA, nrow = length(n), ncol = 4)
+  
+  for (i in seq_along(n)) {
+    coverage[i, ] <- simfun_serial(nobs = n[i])
+    
+  }
+  return(coverage) # Return the results
+}
+
+
+#BenchMark (Taking too long): Will revisit this
+# microbenchmark::microbenchmark(
+#   serial = coverage_serial(),
+#   parallel = coverage_parallel(),
+#   times = 10
+# )
 
