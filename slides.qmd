@@ -43,6 +43,6 @@ embed-resources: true
 - The coverage rate, defined as the proportion of replications in which the true mean $(\mu =1)$ fell within the confidence interval, was calculated.
 
 
-# Preliminary Results
+# Results
 
-![](pic1.JPG)
+![](coverage.JPG)
