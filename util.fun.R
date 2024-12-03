@@ -23,7 +23,7 @@ tcrit.fun <- function(alpha, B){
   return(crit)
 }
 
-
+#need to update
 # Function to generate the bootstrap samples and calculate the bootstrap statistic theta
 # nboot is the number of bootstrap samples
 bootstrap <- function(x, xbar, nboot=1000){
@@ -52,6 +52,10 @@ symboott <- function(x, xbar, thetastar, bootsamples, sdfun = NULL, nboot = 1000
   #symmetric bootstrap-t method
   num <- thetastar - xbar
   n_size <- length(x)
+  
+  # [2024-11-15] George: I would move the cl object outside of the function
+  # in case the user wants to provide their own. That will also imply not
+  # stopping the cluster on exit.
   cl <- parallel::makeCluster(4)
   on.exit(parallel::stopCluster(cl))  # Ensure the cluster stops when function exits
   
@@ -118,8 +122,12 @@ simfun <- function(true.mean = 1, mcrep = 500, nobs, alpha = 0.05){
   xmat <- matrix(sim, ncol = mcrep) #each column is a replication
   xbar <- colMeans(xmat) # Compute the sample mean for each replication
   
-  
+  # [2024-11-15] George: This will likely fail in some scenarios (what if cores = 2?). Again, I recommend
+  # moving the cluster object to be an argument of the function. 
   cl <- makeCluster(detectCores()-3)
+
+  # [2024-11-15] George: Are you sure you can't do this directly without the foreach R
+  # package?
   registerDoParallel(cl)
   sim_results <- foreach(i = 1:mcrep, 
                          .combine = rbind,
@@ -148,6 +156,9 @@ simfun <- function(true.mean = 1, mcrep = 500, nobs, alpha = 0.05){
 
 #============================================== Serial Function ==============================================
 
+# [2024-11-15] George: The serial function should be the same as running the parallel
+# function with a single core. You could later build a test that does that. It is
+# a better approach as you are reducing the number of code lines to maintain.
 simfun_serial <- function(true.mean = 1, mcrep = 500, nobs, alpha = 0.05){
   sim <- rexp(nobs * mcrep, rate = 1/true.mean) # Simulate data
   #sim <- rnorm(nobs * mcrep) # Simulate data
