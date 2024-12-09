@@ -3,3 +3,7 @@
 S3method(print,bootstrap_t)
 export(bootstrap)
 export(bootstrap_t)
+importFrom(parallel,makeCluster)
+importFrom(parallel,parLapply)
+importFrom(parallel,stopCluster)
+importFrom(stats,sd)

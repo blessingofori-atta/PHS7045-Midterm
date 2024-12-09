@@ -11,13 +11,16 @@ bootstrap_t(
   method = c("boott-plugin", "boott-nested", "bootsym-plugin", "bootsym-nested"),
   alpha = 0.05,
   parallel = FALSE,
-  cores = NULL
+  cores = NULL,
+  ...
 )
 }
 \arguments{
 \item{boot_obj}{An object created by the \code{bootstrap} function.}
 
 \item{sdfun}{Optional; function to compute standard errors.}
+
+\item{Bsd}{Number of bootstrap samples to estimate the standard error (default: 2).}
 
 \item{method}{Confidence interval method: "boott-plugin", "boott-nested", "bootsym-plugin" or "bootsym-nested".}
 
@@ -28,6 +31,8 @@ bootstrap computation (default is \code{FALSE}).}
 
 \item{cores}{The number of cores used for parallel processing if \code{parallel} is set to \code{TRUE}.
 This parameter is ignored if \code{parallel} is \code{FALSE}.}
+
+\item{...}{Additional arguments to be passed to the \code{sdfun} function.}
 }
 \value{
 A list containing the confidence intervals, bias, and standard errors.

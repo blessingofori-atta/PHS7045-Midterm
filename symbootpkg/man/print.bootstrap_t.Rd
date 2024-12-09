@@ -19,10 +19,3 @@ This function provides a custom print method for objects of class \code{bootstra
 It outputs a formatted summary of the bootstrap results, including the method used,
 observed theta, standard error, bias, and the confidence interval.
 }
-\examples{
-# Example usage
-boot_obj <- bootstrap_result(...)  # Assume this is a valid bootstrap result
-res <- bootstrap_t(boot_obj, sdfun = some_sdfun, method = "boott-plugin")
-print(res)  # This will call the custom print method
-
-}

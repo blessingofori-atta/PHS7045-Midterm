@@ -13,14 +13,19 @@
 #'                 bootstrap computation (default is `FALSE`).
 #' @param cores The number of cores used for parallel processing if `parallel` is set to `TRUE`.
 #'              This parameter is ignored if `parallel` is `FALSE`.
+#' @param Bsd Number of bootstrap samples to estimate the standard error (default: 2).
+#' @param ... Additional arguments to be passed to the `sdfun` function.
 #' @return A list containing the confidence intervals, bias, and standard errors.
 #' @export
+#' @importFrom stats sd
+#' @importFrom parallel makeCluster stopCluster parLapply
 bootstrap_t <- function(boot_obj,
                         sdfun = NULL, Bsd = 2,
                         method = c("boott-plugin", "boott-nested", "bootsym-plugin", "bootsym-nested"),
                         alpha = 0.05,
                         parallel = FALSE,
-                        cores = NULL) {
+                        cores = NULL,
+                        ...) {
   # Validate inputs
   if (!inherits(boot_obj, "bootstrap_result")) stop("'boot_obj' must be of class 'bootstrap_result'.")
   if (!is.null(sdfun) && !is.function(sdfun)) stop("'sdfun' must be a function.")
@@ -96,7 +101,7 @@ bootstrap_t <- function(boot_obj,
 
     # Use parallelization if specified
     if(parallel){
-      sestar <- parallel::parlapply(cl, 1:B, sdfun) # Parallel execution
+      sestar <- parallel::parLapply(cl, 1:B, sdfun) # Parallel execution
     } else {
       #if no parallel
       sestar <- sapply(1:B, sdfun) # Sequential execution
@@ -168,13 +173,6 @@ bootstrap_t <- function(boot_obj,
 #' @param ... Additional arguments (not used).
 #'
 #' @return Prints a summary of the bootstrap-t results to the console.
-#'
-#' @examples
-#' # Example usage
-#' boot_obj <- bootstrap_result(...)  # Assume this is a valid bootstrap result
-#' res <- bootstrap_t(boot_obj, sdfun = some_sdfun, method = "boott-plugin")
-#' print(res)  # This will call the custom print method
-#'
 #' @export
 print.bootstrap_t <- function(x, ...) {
   cat("\nBootstrap-t Results\n")
@@ -188,4 +186,5 @@ print.bootstrap_t <- function(x, ...) {
   cat("  Lower: ", unname(x$ci[1]), "\n")
   cat("  Upper: ", unname(x$ci[2]), "\n")
   cat("\n")
+  invisible(x)
 }
