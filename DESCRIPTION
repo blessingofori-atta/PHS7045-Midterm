@@ -4,7 +4,8 @@ Version: 0.0.0.9000
 Authors@R: 
     person("Blessing", "Ofori-Atta", , "blessing.ofori-atta@hsc.utah.edu", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+Description: A framework for fomputing boostrap-based confidence intervals, including bootstrap-t symmetric and equal-tailed methods. 
+    It supports plug-in and nested bootstrap approaches for estimating standard erros, with optional parallelization to enchance efficiency.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
