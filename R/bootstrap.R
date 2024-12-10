@@ -5,7 +5,21 @@
 #' @param statistic A user-supplied function that computes a statistic on the data.
 #' @param nboot Number of bootstrap replicates (default: 1000).
 #' @param return_samples Logical; whether to return bootstrap samples (default: TRUE).
-#' @return A list containing the original statistic, bootstrap replicates, and optionally, the bootstrap samples.
+#' @return A list of class \code{bootstrap_results}:
+#' \item{thetahat}{The observed statistic.}
+#' \item{thetastar}{A vector of bootstrap replicates.}
+#' \item{bsamples}{A list of bootstrap samples.}
+#' \item{data}{The original data.}
+#' \item{statistic}{The user-supplied statistic function.}
+#' @examples
+#' # Here is an example of bootstrapping the slope coefficient in a linear reg model
+#'beta <- function(dat) {
+#'mod <- lm(Sepal.Length ~ Sepal.Width, data = dat)
+#'bb <- mod$coefficients[2]
+#'return(bb)
+#'}
+#'set.seed(124)
+#'bootstrap(data=iris, statistic=beta, nboot=2, return_samples=FALSE)
 #' @export
 
 bootstrap <- function(data, statistic, nboot = 1000, return_samples = TRUE) {

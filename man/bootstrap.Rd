@@ -16,8 +16,23 @@ bootstrap(data, statistic, nboot = 1000, return_samples = TRUE)
 \item{return_samples}{Logical; whether to return bootstrap samples (default: TRUE).}
 }
 \value{
-A list containing the original statistic, bootstrap replicates, and optionally, the bootstrap samples.
+A list of class \code{bootstrap_results}:
+\item{thetahat}{The observed statistic.}
+\item{thetastar}{A vector of bootstrap replicates.}
+\item{bsamples}{A list of bootstrap samples.}
+\item{data}{The original data.}
+\item{statistic}{The user-supplied statistic function.}
 }
 \description{
 This function generates bootstrap replicates and provides key statistics.
+}
+\examples{
+# Here is an example of bootstrapping the slope coefficient in a linear reg model
+beta <- function(dat) {
+mod <- lm(Sepal.Length ~ Sepal.Width, data = dat)
+bb <- mod$coefficients[2]
+return(bb)
+}
+set.seed(124)
+bootstrap(data=iris, statistic=beta, nboot=2, return_samples=FALSE)
 }
