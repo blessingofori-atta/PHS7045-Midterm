@@ -7,7 +7,7 @@
 bootstrap_t(
   boot_obj,
   sdfun = NULL,
-  Bsd = 2,
+  Bsd = 25,
   method = c("boott-plugin", "boott-nested", "bootsym-plugin", "bootsym-nested"),
   alpha = 0.05,
   parallel = FALSE,
@@ -20,7 +20,7 @@ bootstrap_t(
 
 \item{sdfun}{Optional; function to compute standard errors.}
 
-\item{Bsd}{Number of bootstrap samples to estimate the standard error (default: 2).}
+\item{Bsd}{Number of bootstrap samples to estimate the standard error (default: 25).}
 
 \item{method}{Confidence interval method: "boott-plugin", "boott-nested", "bootsym-plugin" or "bootsym-nested".}
 
