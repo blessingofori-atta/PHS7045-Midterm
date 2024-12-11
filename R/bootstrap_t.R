@@ -13,14 +13,14 @@
 #'                 bootstrap computation (default is `FALSE`).
 #' @param cores The number of cores used for parallel processing if `parallel` is set to `TRUE`.
 #'              This parameter is ignored if `parallel` is `FALSE`.
-#' @param Bsd Number of bootstrap samples to estimate the standard error (default: 2).
+#' @param Bsd Number of bootstrap samples to estimate the standard error (default: 25).
 #' @param ... Additional arguments to be passed to the `sdfun` function.
 #' @return A list containing the confidence intervals, bias, and standard errors.
 #' @export
 #' @importFrom stats sd
 #' @importFrom parallel makeCluster stopCluster parLapply
 bootstrap_t <- function(boot_obj,
-                        sdfun = NULL, Bsd = 2,
+                        sdfun = NULL, Bsd = 25,
                         method = c("boott-plugin", "boott-nested", "bootsym-plugin", "bootsym-nested"),
                         alpha = 0.05,
                         parallel = FALSE,
@@ -72,15 +72,19 @@ bootstrap_t <- function(boot_obj,
   # Estimate standard errors
   # Ensure sdfun is provided, then apply parallelization or sequential execution
   if(!is.null(sdfun)){
-    sehat <- sdfun(data)
+    sehat <- sdfun(data, ...)
     if (!is.numeric(sehat) || length(sehat) != 1) stop("'sdfun' must return a single numeric value.")
 
     # Use parallelization if specified
     if(parallel){
-      sestar_list <- parallel::parLapply(cl, bsamples, sdfun, ...) # Parallel execution
+      sestar_list <- parallel::parLapply(cl, bsamples, function(sample) {
+        do.call(sdfun, c(list(sample), list(...)))  # Explicitly pass '...' to sdfun
+      }) # Parallel execution
     } else {
       #if no parallel
-      sestar_list <- lapply(bsamples, sdfun, ...) # Sequential execution
+      sestar_list <- lapply(bsamples, function(sample) {
+        do.call(sdfun, c(list(sample), list(...)))  # Explicitly pass '...' to sdfun
+      }) # Sequential execution
     }
 
     sestar <- unlist(sestar_list)
@@ -115,28 +119,28 @@ bootstrap_t <- function(boot_obj,
       tstar <- (thetastar - thetahat) / sestar
       tstar <- sort(tstar)
       t_bounds <- c(tstar[floor(B * alpha / 2)], tstar[floor(B * (1 - alpha / 2))])
-      ci <- c(lower = thetahat - t_bounds[1] * sehat, upper = thetahat + t_bounds[2] * sehat)
+      ci <- c(lower = thetahat - t_bounds[2] * sehat, upper = thetahat - t_bounds[1] * sehat)
       return(ci)
     },
     "boott-nested" = function() {
       tstar <- (thetastar - thetahat) / sestar
       tstar <- sort(tstar)
       t_bounds <- c(tstar[floor(B * alpha / 2)], tstar[floor(B * (1 - alpha / 2))])
-      ci <- c(lower = thetahat - t_bounds[1] * sehat, upper = thetahat + t_bounds[2] * sehat)
+      ci <- c(lower = thetahat - t_bounds[2] * sehat, upper = thetahat - t_bounds[1] * sehat)
       return(ci)
     },
     "bootsym-plugin" = function() {
       tstar <- (thetastar - thetahat) / sestar
       tstar <- sort(abs(tstar))
-      t_bounds <- c(tstar[floor(B * alpha / 2)], tstar[floor(B * (1 - alpha / 2))])
-      ci <- c(lower = thetahat - t_bounds[1] * sehat, upper = thetahat + t_bounds[2] * sehat)
+      t_bound <- floor((1 - alpha) * B)
+      ci <- c(lower = thetahat - t_bound * sehat, upper = thetahat + t_bound * sehat)
       return(ci)
     },
     "bootsym-nested" = function() {
       tstar <- (thetastar - thetahat) / sestar
       tstar <- sort(abs(tstar))
-      t_bounds <- c(tstar[floor(B * alpha / 2)], tstar[floor(B * (1 - alpha / 2))])
-      ci <- c(lower = thetahat - t_bounds[1] * sehat, upper = thetahat + t_bounds[2] * sehat)
+      t_bound <- floor((1 - alpha) * B)
+      ci <- c(lower = thetahat - t_bound * sehat, upper = thetahat + t_bound * sehat)
       return(ci)
     }
   )
