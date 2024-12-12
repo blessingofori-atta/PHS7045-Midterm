@@ -1,0 +1,21 @@
+Package: symbootpkg
+Title: Flexible Boostrap-t CIs:Equal-tailed and Symmetric
+Version: 0.0.0.9000
+Authors@R: 
+    person("Blessing", "Ofori-Atta", , "blessing.ofori-atta@hsc.utah.edu", role = c("aut", "cre"),
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: A framework for fomputing boostrap-based confidence intervals, including bootstrap-t symmetric and equal-tailed methods. 
+    It supports plug-in and nested bootstrap approaches for estimating standard erros, with optional parallelization to enchance efficiency.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports:
+    parallel,
+    stats
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr
