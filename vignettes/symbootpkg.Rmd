@@ -1,0 +1,188 @@
+---
+title: "Symmetric Bootstrap-t Confidence Intervals"
+author: "Blessing Ofori-Atta"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{symbootpkg}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(symbootpkg)
+```
+
+# Introduction
+
+The `symbootpkg` package provides tools for computing confidence intervals using various bootstrap methods. It supports both plugin and nested bootstrap approaches to estimate standard errors and calculate symmetric or equal-tailed intervals.
+
+This vignette will guide you through the main features of the package, including setting up the bootstrap, calculating intervals, and using parallelization for efficiency.
+
+# Installation
+
+To install the development version of symbootpkg from [GitHub](https://github.com/), use the following commands:
+
+```{r}
+# install.packages("devtools")
+#devtools::install_github("blessingofori-atta/symbootpkg")
+```
+
+
+# Overview of Functions
+
+**Key Functions**
+
+- `bootstrap`: Performs the initial bootstrap resampling.
+
+- `bootstrap_t`: Computes confidence intervals using the bootstrap-t equal-tailed and symmetric methods.
+
+- `print.bootstrap_t`: Custom print method for displaying `bootstrap_t` results.
+
+# Example Workflow
+
+## Defining a Statistic Function 
+First, define a statistic function that computes the statistic of interest. In the first example, we use a linear model to estimate the slope of the relationship between Sepal.Length and Sepal.Width in the iris dataset. In the second example, we define the sample mean of Sepal.Length as the statistic of interest using the iris dataset.
+
+```{r}
+set.seed(123)
+
+# Define a statistic function
+# Example 1
+beta <- function(dat) {
+  mod <- lm(Sepal.Length ~ Sepal.Width, data = dat)
+  return(mod$coefficients[2])
+}
+
+# Example 2
+mean_stat <- function(data) {
+  mean(data$Sepal.Length)
+}
+
+```
+
+## Performing Bootstrap Resampling
+Next, perform the bootstrap resampling using the `bootstrap` function. We specify the data, statistic function, number of bootstrap samples, and whether to return the samples.
+
+```{r}
+# Perform bootstrap resampling
+# Example 1
+boot_obj_eg1 <- bootstrap(
+  data = iris,
+  statistic = beta,
+  nboot = 500,
+  return_samples = TRUE
+)
+
+# Example 2
+boot_obj_eg2 <- bootstrap(
+  data = iris,
+  statistic = mean_stat,
+  nboot = 500,
+  return_samples = TRUE
+)
+```
+
+## Computing Confidence Intervals
+Finally, compute the bootstrap-t confidence intervals using the `bootstrap_t` function. We specify the bootstrap object, the number of bootstrap samples for standard error estimation, the method, and the confidence level. 
+
+### Compute Nested Symmetric Bootstrap-t Confidence Intervals
+In the first example, the `bootsym-nested` method is used.
+
+```{r}
+# Compute symmetric bootstrap-t confidence intervals
+ci_result_eg1 <- bootstrap_t(
+  sdfun = NULL,  # Uses nested bootstrap for standard error
+  boot_obj = boot_obj_eg1,
+  Bsd = 25,
+  method = "bootsym-nested",
+  alpha = 0.05
+)
+
+# Print results
+print(ci_result_eg1)
+```
+
+
+### Compute Plugin Confidence Intervals
+In the second example, the `boott-plugin` method is used. The plugin method requires a standard error function `sdfun` to be provided.
+
+```{r}
+# Plugin method (requires sdfun)
+se_function <- function(data) {
+  sqrt(var(data$Sepal.Length) / length(data$Sepal.Length))
+}
+
+# Compute symmetric bootstrap-t confidence intervals
+ci_result_eg2 <- bootstrap_t(
+  sdfun = se_function,  
+  boot_obj = boot_obj_eg2,
+  Bsd = NULL,
+  method = "boott-plugin",
+  alpha = 0.05
+)
+
+# Print results
+print(ci_result_eg2)
+```
+
+
+## Parallelization
+The `bootstrap_t` function supports parallel computation to speed up nested bootstrap methods. To enable parallelization:
+  
+- Set parallel = TRUE.
+
+- Specify the number of cores using the cores argument.
+
+
+```{r}
+# Enable parallel processing
+ci_result_parallel <- bootstrap_t(
+  boot_obj = boot_obj_eg1,
+  sdfun = NULL,  # Uses nested bootstrap for standard error
+  Bsd = 25,
+  method = "bootsym-nested",
+  alpha = 0.05,
+  parallel = TRUE,
+  cores = 2
+)
+
+# Print results
+print(ci_result_parallel)
+```
+
+
+## Customization and Extensibility
+### Custom Statistic Functions
+
+You can define your own statistic functions to analyze specific aspects of the data.
+
+```{r}
+custom_stat <- function(data) {
+  quantile(data$Sepal.Length, probs = 0.75)
+}
+
+boot_custom <- bootstrap(data = iris, statistic = custom_stat, nboot = 200)
+```
+
+### Supported Methods
+The `bootstrap_t` function supports the following methods:
+  
+- `boott-plugin`: Bootstrap-t equal-tailed with plugin standard errors.
+
+- `boott-nested`: Nested bootstrap-t equal-tailed method.
+
+- `bootsym-plugin`: Symmetric bootstrap-t with plugin standard errors.
+
+- `bootsym-nested`: Symmetric nested bootstrap-t method.
+
+
+# Conclusion
+This vignette has demonstrated how to use the symbootpkg package for bootstrap resampling and computing symmetric bootstrap-t confidence intervals. By leveraging parallel processing, you can significantly speed up the computations. For more details, refer to the package documentation and function references.
+
