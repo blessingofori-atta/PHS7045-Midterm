@@ -4,47 +4,124 @@
 # symbootpkg
 
 <!-- badges: start -->
+
+[![R-CMD-check](https://github.com/blessingofori-atta/PHS7045-Midterm/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/blessingofori-atta/PHS7045-Midterm/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of symbootpkg is to …
+The goal of symbootpkg is to provide flexible tools to compute
+bootstrap-t, equal-tailed, and symmetric confidence intervals for
+statistical analysis. It incorporates methods for plugin and nested
+bootstrap standard error estimations, with options for parallelization
+to improve efficiency.
+
+## Features
+
+- **Bootstrap-t Confidence Intervals**: Compute confidence intervals
+  using the bootstrap-t method with options for plugin and nested
+  standard error estimates.
+- **Equal-Tailed and Symmetric Intervals**: Includes methods for both
+  equal-tailed and symmetric bootstrap confidence intervals.
+- **Flexible Standard Error Functions**: Supports user-specified `sdfun`
+  functions or nested bootstrap for standard error estimation.
+- **Parallel Processing**: Optional parallelization to leverage multiple
+  cores for faster computation.
 
 ## Installation
 
-You can install the development version of symbootpkg like so:
+You can install the development version of symbootpkg from
+[GitHub](https://github.com/) with:
 
 ``` r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
+# install.packages("devtools")
+devtools::install_github("blessingofori-atta/symbootpkg")
 ```
 
-## Example
+## Usage
 
-This is a basic example which shows you how to solve a common problem:
+### Basic Example
+
+Here’s a basic example of how to use the bootstrap and bootstrap_t
+functions:
 
 ``` r
 library(symbootpkg)
-## basic example code
+set.seed(123)
+
+# Define a statistic function
+beta <- function(dat) {
+  mod <- lm(Sepal.Length ~ Sepal.Width, data = dat)
+  bb <- mod$coefficients[2]
+  return(bb)
+}
+
+# Perform bootstrap resampling
+boot_obj <- bootstrap(
+  data = iris,
+  statistic = beta,
+  nboot = 500,
+  return_samples = TRUE
+)
+
+# Compute symmetic bootstrap-t confidence intervals
+ci_result <- bootstrap_t(
+  boot_obj = boot_obj,
+  Bsd = 25,
+  method = "bootsym-nested",
+  alpha = 0.05
+)
+
+# Print results
+print(ci_result)
+#> 
+#> Bootstrap-t Results
+#> =====================
+#> Method:          bootsym-nested 
+#> Alpha:           0.05 
+#> Theta (Observed): -0.2233611 
+#> Standard Error:  0.1390663 
+#> Bias:            -0.01010145 
+#> Confidence Interval:
+#>   Lower:  -66.27986 
+#>   Upper:  65.83313
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`?
-You can include R chunks like so:
+### Parallel Processing Example
+
+You can enable parallel processing to speed up the computation:
 
 ``` r
-summary(cars)
-#>      speed           dist       
-#>  Min.   : 4.0   Min.   :  2.00  
-#>  1st Qu.:12.0   1st Qu.: 26.00  
-#>  Median :15.0   Median : 36.00  
-#>  Mean   :15.4   Mean   : 42.98  
-#>  3rd Qu.:19.0   3rd Qu.: 56.00  
-#>  Max.   :25.0   Max.   :120.00
+ci_result_parallel <- bootstrap_t(
+  boot_obj = boot_obj,
+  Bsd = 25,
+  method = "bootsym-nested",
+  parallel = TRUE,
+  cores = 2,
+  alpha = 0.05
+)
+
+# Print results
+print(ci_result_parallel)
+#> 
+#> Bootstrap-t Results
+#> =====================
+#> Method:          bootsym-nested 
+#> Alpha:           0.05 
+#> Theta (Observed): -0.2233611 
+#> Standard Error:  0.1390663 
+#> Bias:            -0.01010145 
+#> Confidence Interval:
+#>   Lower:  -66.27986 
+#>   Upper:  65.83313
 ```
 
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date. `devtools::build_readme()` is handy for this.
+## Contribution
 
-You can also embed plots, for example:
+Contributions are welcome! Please open an issues or submit a pull
+request to improve the package.
 
-<img src="man/figures/README-pressure-1.png" width="100%" />
+## License
 
-In that case, don’t forget to commit and push the resulting figure
-files, so they display on GitHub and CRAN.
+This package is licensed under the MIT License. See the
+[LICENSE](LICENSE) file for details.
+
+------------------------------------------------------------------------

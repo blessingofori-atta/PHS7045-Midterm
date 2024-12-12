@@ -30,33 +30,76 @@ The goal of symbootpkg is to provide flexible tools to compute bootstrap-t, equa
 
 ## Installation
 
-You can install the development version of symbootpkg like so:
+You can install the development version of symbootpkg from [GitHub](https://github.com/) with:
 
 ``` r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
+# install.packages("devtools")
+devtools::install_github("blessingofori-atta/symbootpkg")
 ```
 
-## Example
+## Usage
 
-This is a basic example which shows you how to solve a common problem:
+### Basic Example
+
+Here's a basic example of how to use the bootstrap and bootstrap_t functions:
 
 ```{r example}
 library(symbootpkg)
-## basic example code
+set.seed(123)
+
+# Define a statistic function
+beta <- function(dat) {
+  mod <- lm(Sepal.Length ~ Sepal.Width, data = dat)
+  bb <- mod$coefficients[2]
+  return(bb)
+}
+
+# Perform bootstrap resampling
+boot_obj <- bootstrap(
+  data = iris,
+  statistic = beta,
+  nboot = 500,
+  return_samples = TRUE
+)
+
+# Compute symmetic bootstrap-t confidence intervals
+ci_result <- bootstrap_t(
+  boot_obj = boot_obj,
+  Bsd = 25,
+  method = "bootsym-nested",
+  alpha = 0.05
+)
+
+# Print results
+print(ci_result)
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
+
+### Parallel Processing Example
+
+You can enable parallel processing to speed up the computation:
 
 ```{r cars}
-summary(cars)
+ci_result_parallel <- bootstrap_t(
+  boot_obj = boot_obj,
+  Bsd = 25,
+  method = "bootsym-nested",
+  parallel = TRUE,
+  cores = 2,
+  alpha = 0.05
+)
+
+# Print results
+print(ci_result_parallel)
 ```
 
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this.
 
-You can also embed plots, for example:
+## Contribution
 
-```{r pressure, echo = FALSE}
-plot(pressure)
-```
+Contributions are welcome! Please open an issues or submit a pull request to improve the package.
 
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
+## License
+
+This package is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
