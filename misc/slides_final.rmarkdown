@@ -1,0 +1,219 @@
+---
+title: Bootstrap-t Confidence Interval Methods
+author: Blessing Ofori-Atta
+format:
+  revealjs:
+    slide-number: true
+    footer: "Blessing Ofori-Atta|<https://boforiatta.netlify.app/>"
+---
+
+
+
+## Review of the Problem
+
+
+### Why Bootstrap Confidence Intervals?  
+- Traditional methods for confidence intervals rely on normality assumptions.
+
+- Not all datasets meet these assumptions.
+
+- Bootstrap methods are distribution-free and can be applied to any dataset.
+
+
+---
+
+### Bootstrap-T for Robustness  
+- Bootstrap-t methods allow for:
+  - Non-parametric computation of intervals.
+  - Greater flexibility in data assumptions.
+  - Resampling techniques to estimate standard errors and biases.
+  - More accurate probability coverage, especially for large samples.
+  
+  
+---
+
+## Overview of the Package
+
+::: {.panel-tabset}
+
+## Progress Until the Midterm 
+- Initial features:
+
+  - Focused on symmetric bootstrap-t methods.
+  - Designed only for means.
+  - Limited customization and parallelism.
+
+
+## New Features Added(1)
+
+1. **Support for Bootstrap-t**  
+   - Added functionality for `plugin` and `nested` standard error methods.  
+
+2. **User-Defined Statistics**  
+   - Accepts custom statistic functions.
+
+
+## New Features Added(2)
+
+3. **Parallel Computation**  
+   - Speed-up for nested bootstrap using multicore support.
+   
+4. **Custom Print Functionality** 
+   - Offers clear and concise summary of bootstrap-t results.
+
+:::
+
+
+
+
+---
+## Example with Plugin Method  
+
+### Estimating Difference in Means  
+
+```{r}
+#| echo: true
+#| output-location: column-fragment
+#| code-line-numbers: "2|4-5|11-19|21-25|27"
+# Load the package
+library(symbootpkg)
+
+diff_means <- function(data) {
+  mean(data$Sepal.Length) - mean(data$Sepal.Width)}
+  
+boot_result <- bootstrap(
+  data = iris, 
+  statistic = diff_means, 
+  nboot = 500, 
+  return_samples = TRUE)
+
+plugin_se <- function(data) {
+  var1 <- var(data$Sepal.Length)
+  var2 <- var(data$Sepal.Width)
+  n1 <- length(data$Sepal.Length)
+  n2 <- length(data$Sepal.Width)
+  sqrt(var1 / n1 + var2 / n2)
+}
+
+boot_t_plugin <- bootstrap_t(
+  boot_obj = boot_result, 
+  sdfun = plugin_se, 
+  method = "boott-plugin",  
+  Bsd = NULL, alpha = 0.05)
+
+print(boot_t_plugin)
+```
+
+## Example with Nested Method  
+
+### Estimating Regression Slope 
+
+```{r}
+#| echo: true
+#| output-location: column-fragment
+#| code-line-numbers: "12-17"
+stat_regression <- function(data) {
+  lm(Sepal.Length ~ Sepal.Width, 
+     data = data)$coefficients[2]
+}
+
+boot_result <- bootstrap(
+  data = iris, 
+  statistic = stat_regression, 
+  nboot = 500, 
+  return_samples = TRUE)
+
+boot_t_nested <- bootstrap_t(
+  boot_obj = boot_result, 
+  method = "boott-nested", 
+  sdfun = NULL, Bsd = 50, 
+  parallel = TRUE, 
+  cores = 2)
+
+print(boot_t_nested)
+```
+
+
+## Simulation
+
+```{r}
+library(dplyr)
+library(ggplot2)
+set.seed(123)
+n_values <- c(30, 50, 100, 200, 500)
+Bsd_values <- c(5, 20, 100, 200)
+B <- 500  # Number of outer bootstrap samples
+alpha <- 0.05
+true_mean <- 5
+methods <- c("boott-nested", "bootsym-nested")
+
+# Simulation function
+simulate_coverage <- function(n, Bsd, meth) {
+  results <- replicate(500, {
+    data <- rnorm(n, mean = true_mean, sd = 1)
+    boot_result <- bootstrap(data = data, statistic = mean, nboot = B, return_samples = TRUE)
+    if (meth == "boott-nested") {
+      ci <- bootstrap_t(
+      boot_obj = boot_result,
+      sdfun = NULL,  # Nested bootstrap
+      method = meth,
+      Bsd = Bsd,
+      alpha = alpha,
+      parallel = TRUE,
+      cores = 6
+    )$ci
+    } else {
+      ci <- bootstrap_t(
+      boot_obj = boot_result,
+      sdfun = NULL,  # Nested bootstrap
+      method = meth,
+      Bsd = Bsd,
+      alpha = alpha,
+      parallel = TRUE,
+      cores = 6
+    )$ci
+    }
+    true_mean >= ci[1] && true_mean <= ci[2]
+  })
+  mean(results)  # Proportion of intervals containing the true mean
+}
+
+
+# Perform simulations
+sim_results <- expand.grid(n = n_values, Bsd = Bsd_values, meth = methods) %>%
+  mutate(meth = as.character(meth)) %>%
+  rowwise() %>%
+  mutate(coverage = simulate_coverage(n, Bsd, meth))
+
+# Prepare data for plotting
+sim_results <- sim_results %>% ungroup()
+
+# Plot coverage
+ggplot(sim_results, aes(x = n, y = coverage, color = factor(meth))) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~ Bsd, ncol = 2, labeller = label_both) +
+  labs(
+    title = "Coverage Probability Across Methods and Sample Sizes",
+    x = "Sample Size (n)",
+    y = "Coverage Probability",
+    color = "Method"
+  ) +
+  geom_hline(yintercept = 1 - alpha, linetype = "dashed", color = "black")+
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+
+## Final thoughts
+
+- Supported Methods:
+
+  - Symmetric and equal-tailed confidence intervals.
+  - Plugin and nested bootstrap approaches.
+
+- Key Features:
+
+  - Parallelization for large simulations.
+  - Flexible, user-defined statistics.
+
