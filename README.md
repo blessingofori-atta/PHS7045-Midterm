@@ -110,8 +110,8 @@ print(ci_result_parallel)
 #> Standard Error:  0.1422654 
 #> Bias:            -0.003427493 
 #> Confidence Interval:
-#>   Lower:  -0.5210962 
-#>   Upper:  0.07437411
+#>   Lower:  -0.5131957 
+#>   Upper:  0.06647356
 ```
 
 ## Contribution
@@ -123,5 +123,17 @@ request to improve the package.
 
 This package is licensed under the MIT License. See the
 [LICENSE](LICENSE) file for details.
+
+## References
+
+1.  Efron, B., & Tibshirani, R. J. (1993). An introduction to the
+    bootstrap. New York:Chapman & Hall.
+2.  Hall, P. (1988). On Symmetric Bootstrap Confidence Intervals.
+    Journal of the Royal Statistical Society. Series B (Methodological),
+    50(1), 35–45. <http://www.jstor.org/stable/2345806>.
+3.  Elias, C. J. (2015). Percentile and percentile- t bootstrap
+    confidence intervals: A practical comparison. Journal of Econometric
+    Methods, 4(1), 153–161. <doi:10.1515/jem-2013-0015>
+4.  <http://users.stat.umn.edu/~helwig/notes/npboot-notes.html>
 
 ------------------------------------------------------------------------

@@ -102,4 +102,12 @@ Contributions are welcome! Please open an issues or submit a pull request to imp
 
 This package is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
+## References
+
+1. Efron, B., & Tibshirani, R. J. (1993). An introduction to the bootstrap. New York:Chapman & Hall. 
+2. Hall, P. (1988). On Symmetric Bootstrap Confidence Intervals. Journal of the Royal Statistical Society. Series B (Methodological), 50(1), 35–45. http://www.jstor.org/stable/2345806.
+3. Elias, C. J. (2015). Percentile and percentile- t bootstrap confidence intervals: A practical comparison. Journal of Econometric Methods, 4(1), 153–161. doi:10.1515/jem-2013-0015
+4. http://users.stat.umn.edu/~helwig/notes/npboot-notes.html
+
+
 ---
