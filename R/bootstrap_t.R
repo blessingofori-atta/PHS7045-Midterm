@@ -55,6 +55,9 @@ bootstrap_t <- function(boot_obj,
     # Create the cluster and ensure it's stopped afterward
     cl <- parallel::makeCluster(cores)
     on.exit(parallel::stopCluster(cl), add = TRUE)
+
+    # Export the necessary functions and variables to the cluster
+    parallel::clusterExport(cl, varlist = c("bootstrap", "beta", "boot_obj", "sdfun", "Bsd", "method", "alpha"), envir = environment())
   }
 
 
@@ -106,6 +109,7 @@ bootstrap_t <- function(boot_obj,
     # Use parallelization if specified
     if(parallel){
       sestar <- parallel::parLapply(cl, 1:B, sdfun) # Parallel execution
+      sestar <- unlist(sestar)
     } else {
       #if no parallel
       sestar <- sapply(1:B, sdfun) # Sequential execution

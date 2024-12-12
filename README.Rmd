@@ -19,7 +19,14 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/blessingofori-atta/PHS7045-Midterm/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/blessingofori-atta/PHS7045-Midterm/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of symbootpkg is to ...
+The goal of symbootpkg is to provide flexible tools to compute bootstrap-t, equal-tailed, and symmetric confidence intervals for statistical analysis. It incorporates methods for plugin and nested bootstrap standard error estimations, with options for parallelization to improve efficiency.
+
+## Features
+- **Bootstrap-t Confidence Intervals**: Compute confidence intervals using the bootstrap-t method with options for plugin and nested standard error estimates.
+- **Equal-Tailed and Symmetric Intervals**: Includes methods for both equal-tailed and symmetric bootstrap confidence intervals.
+- **Flexible Standard Error Functions**: Supports user-specified `sdfun` functions or nested bootstrap for standard error estimation.
+- **Parallel Processing**: Optional parallelization to leverage multiple cores for faster computation.
+
 
 ## Installation
 
