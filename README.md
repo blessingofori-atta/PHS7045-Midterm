@@ -58,7 +58,7 @@ beta <- function(dat) {
 boot_obj <- bootstrap(
   data = iris,
   statistic = beta,
-  nboot = 500,
+  nboot = 1000,
   return_samples = TRUE
 )
 
@@ -78,11 +78,11 @@ print(ci_result)
 #> Method:          bootsym-nested 
 #> Alpha:           0.05 
 #> Theta (Observed): -0.2233611 
-#> Standard Error:  0.1390663 
-#> Bias:            -0.01010145 
+#> Standard Error:  0.1422654 
+#> Bias:            -0.003427493 
 #> Confidence Interval:
-#>   Lower:  -66.27986 
-#>   Upper:  65.83313
+#>   Lower:  -0.519971 
+#>   Upper:  0.07324885
 ```
 
 ### Parallel Processing Example
@@ -107,11 +107,11 @@ print(ci_result_parallel)
 #> Method:          bootsym-nested 
 #> Alpha:           0.05 
 #> Theta (Observed): -0.2233611 
-#> Standard Error:  0.1390663 
-#> Bias:            -0.01010145 
+#> Standard Error:  0.1422654 
+#> Bias:            -0.003427493 
 #> Confidence Interval:
-#>   Lower:  -66.27986 
-#>   Upper:  65.83313
+#>   Lower:  -0.5210962 
+#>   Upper:  0.07437411
 ```
 
 ## Contribution

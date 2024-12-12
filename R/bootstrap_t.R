@@ -136,14 +136,14 @@ bootstrap_t <- function(boot_obj,
     "bootsym-plugin" = function() {
       tstar <- (thetastar - thetahat) / sestar
       tstar <- sort(abs(tstar))
-      t_bound <- floor((1 - alpha) * B)
+      t_bound <- tstar[floor((1 - alpha) * B)]
       ci <- c(lower = thetahat - t_bound * sehat, upper = thetahat + t_bound * sehat)
       return(ci)
     },
     "bootsym-nested" = function() {
       tstar <- (thetastar - thetahat) / sestar
       tstar <- sort(abs(tstar))
-      t_bound <- floor((1 - alpha) * B)
+      t_bound <- tstar[floor((1 - alpha) * B)]
       ci <- c(lower = thetahat - t_bound * sehat, upper = thetahat + t_bound * sehat)
       return(ci)
     }

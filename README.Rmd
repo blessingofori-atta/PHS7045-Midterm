@@ -58,7 +58,7 @@ beta <- function(dat) {
 boot_obj <- bootstrap(
   data = iris,
   statistic = beta,
-  nboot = 500,
+  nboot = 1000,
   return_samples = TRUE
 )
 
